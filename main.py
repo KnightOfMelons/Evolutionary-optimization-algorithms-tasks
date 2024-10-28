@@ -2,23 +2,21 @@ import numpy as np
 from scipy.optimize import minimize, differential_evolution
 import time
 
-
 # Определение функции Растригина
 def rastrigin(x):
     a = 10
     return a * len(x) + sum([(xi ** 2 - a * np.cos(2 * np.pi * xi)) for xi in x])
-
 
 # Определение градиента (якобиана) функции Растригина
 def rastrigin_jac(x):
     a = 10
     return np.array([2 * xi + 2 * a * np.pi * np.sin(2 * np.pi * xi) for xi in x])
 
-
 # Параметры для теста
 dim = 2  # размерность пространства
 bounds = [(-5.12, 5.12) for _ in range(dim)]  # границы для каждого параметра
 num_runs = 100  # количество прогонов
+max_generations = 100  # максимальное число поколений для дифференциальной эволюции
 
 # Шаг 1: Метод Ньютона
 newton_results = []
@@ -28,11 +26,15 @@ for _ in range(num_runs):
     newton_results.append(res.fun)
 
 # Шаг 2: Дифференциальная эволюция
-de_params = {'strategy': 'best1bin', 'mutation': 0.5, 'recombination': 0.7, 'popsize': 15}
+de_params = {'strategy': 'best1bin', 'mutation': 0.5, 'recombination': 0.7, 'popsize': 15, 'maxiter': max_generations}
 de_results = []
+de_times = []
 for _ in range(num_runs):
+    start_time = time.time()
     res = differential_evolution(rastrigin, bounds, **de_params)
+    elapsed_time = time.time() - start_time
     de_results.append(res.fun)
+    de_times.append(elapsed_time)
 
 # Шаг 3: Расчет статистики
 newton_mean = np.mean(newton_results)
@@ -87,3 +89,17 @@ print(f"\nЧасть 2.\n"
 
 print(f"Дифференциальная эволюция:\n"
       f"Среднее время для достижения целевого значения: {de_mean_time} секунд")
+
+# Часть 3: Оценка времени нахождения последнего локального экстремума
+de_mean_final_time = np.mean(de_times)
+de_variance_final_time = np.var(de_times)
+
+de_mean_final_result = np.mean(de_results)
+de_variance_final_result = np.var(de_results)
+
+print(f"\nЧасть 3.\n"
+      f"Дифференциальная эволюция:\n"
+      f"Среднее время нахождения последнего локального экстремума: {de_mean_final_time} секунд\n"
+      f"Дисперсия времени нахождения последнего локального экстремума: {de_variance_final_time}\n"
+      f"Среднее значение последнего локального экстремума: {de_mean_final_result}\n"
+      f"Дисперсия последнего локального экстремума: {de_variance_final_result}")
